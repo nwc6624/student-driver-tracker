@@ -19,25 +19,53 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
   final _locationController = TextEditingController();
   final _notesController = TextEditingController();
   DateTime _selectedDate = DateTime.now();
+  final _dateController = TextEditingController();
+  
+  @override
+  void initState() {
+    super.initState();
+    _updateDateText();
+  }
+  
+  void _updateDateText() {
+    _dateController.text = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+  }
 
   @override
   void dispose() {
     _durationController.dispose();
     _locationController.dispose();
     _notesController.dispose();
+    _dateController.dispose();
     super.dispose();
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final BuildContext dialogContext = context;
     final DateTime? picked = await showDatePicker(
-      context: context,
+      context: dialogContext,
       initialDate: _selectedDate,
       firstDate: DateTime(2000),
       lastDate: DateTime(2025),
+      builder: (BuildContext context, Widget? child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Theme.of(context).primaryColor,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
-    if (picked != null && picked != _selectedDate) {
+    
+    if (picked != null) {
       setState(() {
         _selectedDate = picked;
+        _updateDateText();
       });
     }
   }
@@ -132,13 +160,17 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
                 },
               ),
               const SizedBox(height: 16),
-              ListTile(
-                title: const Text('Date'),
-                subtitle: Text(
-                  '${_selectedDate.year}-${_selectedDate.month}-${_selectedDate.day}',
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Date',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () => _selectDate(context),
+                  ),
                 ),
-                trailing: const Icon(Icons.calendar_today),
-                onTap: () => _selectDate(context),
+                controller: _dateController,
+                readOnly: true,
               ),
               const SizedBox(height: 16),
               TextFormField(

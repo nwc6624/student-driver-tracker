@@ -3,8 +3,12 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../models/driver.dart';
 import '../models/driving_session.dart';
 import 'add_session_screen.dart';
+import 'edit_session_screen.dart';
+import 'timer_session_screen.dart';
 import '../utils/pdf_generator.dart';
 import '../utils/permission_handler.dart';
+import '../widgets/driving_calendar.dart';
+import 'package:intl/intl.dart';
 
 class DriverProfileScreen extends StatefulWidget {
   final String driverId;
@@ -16,6 +20,66 @@ class DriverProfileScreen extends StatefulWidget {
 
 class _DriverProfileScreenState extends State<DriverProfileScreen> {
   bool _dialogShown = false;
+
+  void _onDaySelected(DateTime selectedDay, List<DrivingSession> sessions) {
+    // Find sessions on the selected day
+    final sessionsOnDay = sessions.where((session) {
+      return session.date.year == selectedDay.year &&
+          session.date.month == selectedDay.month &&
+          session.date.day == selectedDay.day;
+    }).toList();
+
+    if (sessionsOnDay.isNotEmpty) {
+      // If there's only one session, open it directly
+      if (sessionsOnDay.length == 1) {
+        _navigateToEditSession(sessionsOnDay.first);
+      } else {
+        // If multiple sessions, show a dialog to choose
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Sessions on ${DateFormat('MMM d, y').format(selectedDay)}'),
+            content: SizedBox(
+              width: double.maxFinite,
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: sessionsOnDay.length,
+                itemBuilder: (context, index) {
+                  final session = sessionsOnDay[index];
+                  final duration = session.duration;
+                  final hours = duration.inHours;
+                  final minutes = duration.inMinutes.remainder(60);
+                  return ListTile(
+                    title: Text('${hours}h ${minutes}m'),
+                    subtitle: Text(session.notes ?? 'No notes'),
+                    onTap: () {
+                      Navigator.pop(context);
+                      _navigateToEditSession(session);
+                    },
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Close'),
+              ),
+            ],
+          ),
+        );
+      }
+    }
+  }
+
+  void _navigateToEditSession(DrivingSession session) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditSessionScreen(sessionId: session.id),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -187,59 +251,104 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
               });
             }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildDriverInfo(driver, totalDuration, isComplete),
-                const SizedBox(height: 24),
-                Expanded(
-                  child: ListView.builder(
-                    itemCount: sessions.length,
-                    itemBuilder: (context, index) {
+            return CustomScrollView(
+              slivers: [
+                // Driver Info Card
+                SliverToBoxAdapter(
+                  child: _buildDriverInfo(driver, totalDuration, isComplete),
+                ),
+                // Calendar
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+                    child: DrivingCalendar(
+                      driverId: widget.driverId,
+                      sessions: sessions,
+                      onDaySelected: (day) => _onDaySelected(day, sessions),
+                    ),
+                  ),
+                ),
+                // Logs Header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                    child: Text(
+                      'Driving Logs (${sessions.length})',
+                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+                // Logs List
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
                       final session = sessions[index];
+                      final duration = session.duration;
+                      final hours = duration.inHours;
+                      final minutes = duration.inMinutes.remainder(60);
+                      final date = session.date;
+                      final formattedDate = DateFormat('MMM d, y h:mm a').format(date);
+                      
                       return Card(
-                        child: ListTile(
-                          title: Text(
-                            '${session.duration.inMinutes} minutes',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('${session.date.year}-${session.date.month}-${session.date.day}'),
-                              Text(session.location),
-                              if (session.notes != null && session.notes!.isNotEmpty)
-                                Text(session.notes!),
-                            ],
-                          ),
-                          trailing: IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () {
-                              showDialog(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: const Text('Delete Session'),
-                                  content: const Text('Are you sure you want to delete this session?'),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () => Navigator.pop(context),
-                                      child: const Text('Cancel'),
+                        margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+                        child: InkWell(
+                          onTap: () async {
+                            final updated = await Navigator.push<bool>(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EditSessionScreen(sessionId: session.id!),
+                              ),
+                            );
+                            if (updated == true) {
+                              setState(() {}); // Refresh the list if session was updated
+                            }
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      formattedDate,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
-                                    TextButton(
-                                      onPressed: () {
-                                        sessionsBox.delete(session.id);
-                                        Navigator.pop(context);
-                                      },
-                                      child: const Text('Delete'),
+                                    Text(
+                                      '${hours}h ${minutes}m',
+                                      style: TextStyle(
+                                        color: Theme.of(context).primaryColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
                                     ),
                                   ],
                                 ),
-                              );
-                            },
+                                if (session.location.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    session.location,
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
+                                if (session.notes != null && session.notes!.isNotEmpty) ...[
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    session.notes!,
+                                    style: const TextStyle(fontSize: 14, fontStyle: FontStyle.italic),
+                                  ),
+                                ],
+                              ],
+                            ),
                           ),
                         ),
                       );
                     },
+                    childCount: sessions.length,
                   ),
                 ),
               ],
@@ -249,10 +358,37 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => AddSessionScreen(driverId: widget.driverId),
+          showDialog(
+            context: context,
+            builder: (context) => AlertDialog(
+              title: const Text('Add Driving Session'),
+              content: const Text('Choose how to log your driving session:'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddSessionScreen(driverId: widget.driverId),
+                      ),
+                    );
+                  },
+                  child: const Text('Manual Entry'),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => TimerSessionScreen(driverId: widget.driverId),
+                      ),
+                    );
+                  },
+                  child: const Text('Timer Mode'),
+                ),
+              ],
             ),
           );
         },
@@ -262,51 +398,130 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
   }
 
   Widget _buildDriverInfo(Driver driver, Duration logged, bool isComplete) {
+    final hours = logged.inHours;
+    final minutes = logged.inMinutes.remainder(60);
+    final requiredHours = driver.totalHoursRequired ?? 0;
+    final progress = requiredHours > 0 ? (hours + minutes / 60) / requiredHours : 0.0;
+    
+    // Format progress text
+    final progressText = requiredHours > 0
+        ? '${_formatHours(hours + minutes / 60)} / ${_formatHours(requiredHours)} hours'
+        : '${_formatHours(hours + minutes / 60)} hours';
+
     return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              driver.name,
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            if (driver.age != null)
-              Text(
-                '${driver.age} years old',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            if (driver.totalHoursRequired != null)
-              Text(
-                '${driver.totalHoursRequired} hours required',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-            Text(
-              'Logged: ${_formatDuration(logged)}',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: isComplete ? Colors.green : null,
+            Row(
+              children: [
+                Text(
+                  driver.name,
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                if (isComplete)
+                  const Padding(
+                    padding: EdgeInsets.only(left: 8.0),
+                    child: Icon(
+                      Icons.check_circle,
+                      color: Colors.green,
+                      size: 24,
+                    ),
                   ),
+              ],
             ),
-            if (isComplete)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'Driving Hours Complete',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.green,
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.timer, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  progressText,
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              ],
+            ),
+            if (driver.totalHoursRequired != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.flag, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${_formatHours(driver.totalHoursRequired!)} hours required',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ],
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.directions_car, size: 16, color: Colors.grey[600]),
+                const SizedBox(width: 4),
+                Text(
+                  '${_formatHours(hours + minutes / 60)} hours logged',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: isComplete ? Colors.green : null,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            if (isComplete) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(4.0),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.green[800], size: 16),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Required hours completed!',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.green[800],
                         fontWeight: FontWeight.bold,
                       ),
+                    ),
+                  ],
                 ),
               ),
-            if (driver.notes != null && driver.notes!.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0),
-                child: Text(
-                  driver.notes!,
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
+            ],
+            if (driver.age != null) ...[
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(Icons.person, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Text(
+                    '${driver.age} years old',
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
               ),
+            ],
+            if (driver.notes != null && driver.notes!.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.notes, size: 16, color: Colors.grey[600]),
+                  const SizedBox(width: 4),
+                  Expanded(
+                    child: Text(
+                      driver.notes!,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ],
         ),
       ),

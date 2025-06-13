@@ -37,6 +37,8 @@ dependencies:
   
   # Date and Time
   intl: ^0.20.2
+  table_calendar: ^3.0.9
+  syncfusion_flutter_datepicker: ^29.2.10
   
   # PDF Generation
   pdf: ^3.10.11
@@ -62,6 +64,7 @@ dependencies:
   
   # UI Components
   cupertino_icons: ^1.0.8
+  
 
 dev_dependencies:
   flutter_test:
