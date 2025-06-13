@@ -65,12 +65,12 @@ class _AddSessionScreenState extends State<AddSessionScreen> {
 
   void _saveSession() {
     if (_formKey.currentState!.validate()) {
-      final duration = int.tryParse(_durationController.text) ?? 0;
+      final minutes = int.parse(_durationController.text);
       
       final session = DrivingSession(
         id: const Uuid().v4(),
         driverId: widget.driverId,
-        duration: Duration(minutes: duration),
+        duration: Duration(minutes: minutes),
         date: _selectedDate,
         location: _locationController.text,
         notes: _notesController.text.isEmpty ? null : _notesController.text,

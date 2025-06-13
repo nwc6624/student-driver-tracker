@@ -9,12 +9,14 @@ import 'screens/about_screen.dart';
 import 'screens/add_session_screen.dart';
 import 'screens/create_driver_screen.dart';
 import 'screens/driver_profile_screen.dart';
+import 'adapters/duration_adapter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   
   // Register Hive adapters
+  Hive.registerAdapter(DurationAdapter());
   Hive.registerAdapter(DriverAdapter());
   Hive.registerAdapter(DrivingSessionAdapter());
   
