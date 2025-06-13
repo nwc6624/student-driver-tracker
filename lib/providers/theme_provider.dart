@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../theme/app_theme.dart';
 
 class ThemeProvider extends StateNotifier<ThemeMode> {
   final SharedPreferences _prefs;
@@ -8,6 +9,14 @@ class ThemeProvider extends StateNotifier<ThemeMode> {
   ThemeProvider(this._prefs) : super(_prefs.getString('theme_mode') == 'dark' 
       ? ThemeMode.dark 
       : ThemeMode.light);
+
+  // Get the current theme data
+  ThemeData get themeData => state == ThemeMode.dark 
+      ? AppTheme.darkTheme 
+      : AppTheme.lightTheme;
+      
+  // Get the current background image
+  String get backgroundImage => AppTheme.getBackgroundImage(state);
 
   void toggleTheme() {
     state = state == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;

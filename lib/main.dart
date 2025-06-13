@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:student_driver_tracker/theme/app_theme.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'models/driver.dart';
@@ -10,6 +11,7 @@ import 'screens/add_session_screen.dart';
 import 'screens/create_driver_screen.dart';
 import 'screens/driver_profile_screen.dart';
 import 'adapters/duration_adapter.dart';
+import 'theme/app_theme.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,24 +42,39 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(ThemeProvider.provider);
+    final themeProvider = ref.watch(ThemeProvider.provider.notifier);
     
     return MaterialApp(
       title: 'Student Driver Tracker',
-      theme: ThemeData(
+      theme: AppTheme.lightTheme.copyWith(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4A90E2), // Light blue
+          seedColor: const Color(0xFF4A90E2),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
       ),
-      darkTheme: ThemeData(
+      darkTheme: AppTheme.darkTheme.copyWith(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF4A90E2), // Light blue
+          seedColor: const Color(0xFF4A90E2),
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
       ),
       themeMode: themeMode,
+      builder: (context, child) {
+        final theme = Theme.of(context);
+        final appTheme = theme.extension<AppThemeExtension>();
+        
+        return Container(
+          decoration: BoxDecoration(
+            image: DecorationImage(
+              image: AssetImage(appTheme?.backgroundImage ?? 'assets/images/light_background.png'),
+              fit: BoxFit.cover,
+            ),
+          ),
+          child: child,
+        );
+      },
       home: const HomeScreen(),
       routes: {
         '/create-driver': (context) => const CreateDriverScreen(),
