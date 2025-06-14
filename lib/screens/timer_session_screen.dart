@@ -6,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/driving_session.dart';
 import '../utils/permission_handler.dart';
+import '../utils/date_formatter.dart';
 
 class TimerSessionScreen extends StatefulWidget {
   final String driverId;
@@ -32,7 +33,7 @@ class _TimerSessionScreenState extends State<TimerSessionScreen> {
   }
   
   void _updateDateText() {
-    _dateController.text = '${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}';
+    _dateController.text = DateFormatter.formatDate(_selectedDate);
   }
   Timer? _timer;
 
@@ -98,32 +99,46 @@ class _TimerSessionScreenState extends State<TimerSessionScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    // Create a new context that won't be disposed when the dialog is shown
     final BuildContext dialogContext = context;
-    final DateTime? picked = await showDatePicker(
-      context: dialogContext,
-      initialDate: _selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2025),
-      builder: (BuildContext context, Widget? child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: Theme.of(context).primaryColor,
-              onPrimary: Colors.white,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
-    );
     
-    if (picked != null) {
-      setState(() {
-        _selectedDate = picked;
-        _updateDateText();
-      });
+    try {
+      final DateTime? picked = await showDatePicker(
+        context: dialogContext,
+        initialDate: _selectedDate,
+        firstDate: DateTime(2000),
+        lastDate: DateTime(2100), // Extended to a more reasonable future date
+        builder: (BuildContext context, Widget? child) {
+          return Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: Theme.of(context).primaryColor,
+                onPrimary: Colors.white,
+                surface: Colors.white,
+                onSurface: Colors.black,
+              ),
+              dialogBackgroundColor: Colors.white,
+            ),
+            child: child ?? const SizedBox.shrink(),
+          );
+        },
+      );
+      
+      if (picked != null && picked != _selectedDate) {
+        if (mounted) {
+          setState(() {
+            _selectedDate = picked;
+            _updateDateText();
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error showing date picker: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Failed to show date picker')),
+        );
+      }
     }
   }
 
@@ -231,11 +246,16 @@ class _TimerSessionScreenState extends State<TimerSessionScreen> {
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.calendar_today),
-                  onPressed: () => _selectDate(context),
+                  onPressed: () {
+                    _selectDate(context);
+                  },
                 ),
               ),
               controller: _dateController,
               readOnly: true,
+              onTap: () {
+                _selectDate(context);
+              },
             ),
             const SizedBox(height: 16),
             TextField(

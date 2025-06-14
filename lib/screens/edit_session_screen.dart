@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import '../models/driving_session.dart';
 import '../utils/permission_handler.dart';
+import '../utils/date_formatter.dart';
 
 class EditSessionScreen extends StatefulWidget {
   final String sessionId;
@@ -134,7 +135,7 @@ class _EditSessionScreenState extends State<EditSessionScreen> {
                 border: const OutlineInputBorder(),
               ),
               controller: TextEditingController(
-                text: DateFormat.yMMMd().format(_selectedDate),
+                text: DateFormatter.formatDate(_selectedDate),
               ),
               readOnly: true,
             ),

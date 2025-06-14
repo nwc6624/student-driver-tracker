@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:hive/hive.dart';
-import 'package:intl/intl.dart';
 import '../models/driving_session.dart';
+import '../utils/date_formatter.dart';
 
 class DrivingCalendar extends StatefulWidget {
   final String driverId;
@@ -137,13 +137,15 @@ class _DrivingCalendarState extends State<DrivingCalendar> {
                   fontSize: 18.0,
                   fontWeight: FontWeight.bold,
                 ),
+                titleTextFormatter: (date, locale) => DateFormatter.formatDateForDisplay(date),
               ),
               calendarBuilders: CalendarBuilders(
                 // Custom day builder to show "Today" text and log indicators
                 defaultBuilder: (context, day, focusedDay) {
-                  final isToday = isSameDay(day, today);
-                  final hasLogs = _isLoggedDay(day);
-                  
+                  final isToday = isSameDay(day, DateTime.now());
+                  final hasSession = _markedDates.any((date) => isSameDay(date, day));
+                  final isSelected = isSameDay(_selectedDay, day);
+
                   return Stack(
                     alignment: Alignment.center,
                     children: [
@@ -160,19 +162,20 @@ class _DrivingCalendarState extends State<DrivingCalendar> {
                             ),
                           ),
                         ),
-                      // Show dot for days with logs
-                      if (hasLogs)
-                        Positioned(
-                          bottom: 4,
-                          child: Container(
-                            width: 6.0,
-                            height: 6.0,
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
+                      // Date text
+                      Text(
+                        DateFormatter.formatDay(day),
+                        style: TextStyle(
+                          color: isSelected
+                              ? Colors.white
+                              : isToday
+                                  ? Theme.of(context).colorScheme.primary
+                                  : hasSession
+                                      ? Theme.of(context).colorScheme.primary
+                                      : null,
+                          fontWeight: isToday || hasSession ? FontWeight.bold : null,
                         ),
+                      ),
                     ],
                   );
                 },
@@ -231,7 +234,7 @@ class _DrivingCalendarState extends State<DrivingCalendar> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                '${day.day}',
+                DateFormatter.formatDay(day),
                 style: TextStyle(
                   color: isSelected 
                       ? Colors.white 

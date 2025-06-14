@@ -7,6 +7,7 @@ import 'edit_session_screen.dart';
 import 'timer_session_screen.dart';
 import '../utils/pdf_generator.dart';
 import '../utils/permission_handler.dart';
+import '../utils/date_formatter.dart';
 import '../widgets/driving_calendar.dart';
 import 'package:intl/intl.dart';
 
@@ -38,7 +39,7 @@ class _DriverProfileScreenState extends State<DriverProfileScreen> {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
-            title: Text('Sessions on ${DateFormat('MMM d, y').format(selectedDay)}'),
+            title: Text('Sessions on ${DateFormatter.formatDateForDisplay(selectedDay)}'),
             content: SizedBox(
               width: double.maxFinite,
               child: ListView.builder(
