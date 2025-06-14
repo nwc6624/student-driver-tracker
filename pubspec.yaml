@@ -65,10 +65,18 @@ dependencies:
   # UI Components
   cupertino_icons: ^1.0.8
   
-
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  flutter_native_splash: ^2.4.3
+
+flutter_native_splash:
+  color: "#ffffff"
+  image: assets/images/splash.png
+  android: true
+  ios: true
+  android_gravity: fill
+  full_screen: true
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.4
   build_runner: ^2.4.8

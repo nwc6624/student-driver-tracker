@@ -9,7 +9,7 @@ class AboutScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('About'),
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,8 +35,31 @@ class AboutScreen extends StatelessWidget {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 24),
+            const Text(
+              'Privacy & Data',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              '• All your data is stored locally on your device',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '• Your data is only shared when you choose to export it as a PDF',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              '• Location services are optional and only used when enabled in the app settings',
+              style: TextStyle(fontSize: 16),
+            ),
+            const SizedBox(height: 24),
             Text(
-              'Developed by: Your Name',
+              'Developed by: Noah Caulfield',
               style: TextStyle(
                 fontSize: 16,
                 color: Theme.of(context).colorScheme.primary,
