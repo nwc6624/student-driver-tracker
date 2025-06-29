@@ -1,5 +1,5 @@
 name: student_driver_tracker
-description: "A new Flutter project."
+description: "Track supervised driving sessions for teen drivers. Create driver profiles, log sessions with weather conditions, monitor progress toward required hours, and export driving logs as PDF. Features a beautiful southwestern-themed interface with light/dark mode support."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -71,6 +71,7 @@ dev_dependencies:
     sdk: flutter
   build_runner: ^2.4.8
   hive_generator: ^2.0.0
+  image: ^4.1.7
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

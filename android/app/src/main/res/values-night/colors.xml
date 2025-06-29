@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Southwestern-themed colors for dark mode launch screen -->
+    <color name="southwestern_background_adaptive">#2F2F2F</color> <!-- Dark gray background for dark mode -->
+</resources> 

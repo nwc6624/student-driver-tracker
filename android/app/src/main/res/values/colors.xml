@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Southwestern-themed colors for launch screen -->
+    <color name="southwestern_background">#F5F5DC</color> <!-- Beige background -->
+    <color name="southwestern_background_adaptive">#F5F5DC</color> <!-- Beige background for light mode -->
+    <color name="southwestern_primary">#D2691E</color> <!-- Southwestern orange -->
+    <color name="southwestern_secondary">#8B4513</color> <!-- Saddle brown -->
+</resources> 
